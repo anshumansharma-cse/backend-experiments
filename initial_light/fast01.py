@@ -86,8 +86,24 @@ def about():
     }
 
 
-# Study This:
-# Using Request class
+# Study This: Using Request class
+#
+# WHAT: FastAPI exposes an ASGI `Request` object that wraps the incoming
+#       HTTP request. You get direct attribute access to method, URL,
+#       headers, cookies, path/query params, and raw body — anything the
+#       framework doesn't auto-parse via type hints.
+#
+# HOW: Add `request: Request` as a typed parameter in your endpoint
+#      signature. FastAPI's DI system injects it automatically — no extra
+#      boilerplate needed. Access fields like `request.method`,
+#      `request.headers["x-custom"]`, `request.query_params`, etc.
+#
+# WHY: FastAPI's automatic parameter injection (path, query, body) covers
+#      the common cases. Use `Request` when you need something those
+#      shortcuts don't expose — arbitrary headers, raw body bytes, the
+#      full ASGI scope, or when you want to inspect the request before
+#      FastAPI processes it.
+
 @app.get("/bug/info")
 async def request_info(request: Request):
     """Bug Info"""
@@ -98,8 +114,46 @@ async def request_info(request: Request):
         "path_params": request.path_params,
         "query_params": request.query_params
     }
-#
 
+
+# --- Tags explained ---
+#
+# WHAT: Tags are string labels you attach to an endpoint's decorator.
+#       They have zero effect on routing or request handling — they only
+#       shape the auto-generated OpenAPI/Swagger docs.
+#
+# WHY: Without tags every route appears in one flat list in /docs.
+#      With tags FastAPI groups routes by name so Swagger UI renders
+#      collapsible sections (e.g. "Restaurant", "User", "Auth").
+#      An endpoint can belong to multiple tags by passing a list.
+#
+# HOW: Pass a list of strings as the `tags` kwarg on any decorator
+#      (@app.get, @app.post, etc.):
+#
+#   @app.get("/restaurant/delhi", tags=["Restaurant"])
+#   @app.get("/user/profile",     tags=["User", "Auth"])   # multi-tag
+#
+# Tagged routes show up under their tag group in the interactive docs.
+
+@app.get("/restaurant/delhi", tags=["Restaurant"])
+def list_restro_delhi():
+    """another docstring for another endpoint"""
+    return {
+        "restaurant": [
+            {"Bk": "Aloo Tikki"}
+        ]
+    }
+
+
+
+@app.get("/restaurant/up", tags=["Restaurant"])
+def list_restro_up():
+    """another docstring for another endpoint"""
+    return {
+        "restaurant": [
+            {"M'D": "Aloo Tikki"}
+        ]
+    }
 
 
 if __name__ == "__main__":
