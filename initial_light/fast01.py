@@ -1,8 +1,3 @@
-from dns import query
-from fastapi import FastAPI
-from pure_eval.my_getattr_static import method_descriptor
-import uvicorn
-
 from fastapi import FastAPI
 import uvicorn
 
