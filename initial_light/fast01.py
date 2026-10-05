@@ -187,3 +187,67 @@ if __name__ == "__main__":
     # Fix: change `__01_fast__` to `__main__`. Then both invocation styles work.
     uvicorn.run("fast01:app", host="127.0.0.1", port=8080, reload=True)
 
+
+# ============================================================================
+# HEADS-UP — FastAPI Pitfalls & Mental Models
+# ============================================================================
+#
+# 1. async def vs def — which one should one use and when?
+#    • `async def` runs on the main event loop. Great for I/O-bound work
+#      (HTTP calls, DB queries via async drivers). BUT if you call blocking
+#      sync code inside it (requests.get, time.sleep, synchronous DB drivers),
+#      you BLOCK the entire event loop — every other request stalls.
+#    • `def` runs in FastAPI's thread pool automatically. Safe for CPU-bound
+#      or blocking sync code; the framework delegates it off the event loop.
+#
+#     • Rule of thumb: use `def` unless you have a good async library available.
+#
+# 2. Python's return value → HTTP response
+#    Returning a dict/list/str is auto-converted:
+#      dict  → 200 + application/json
+#      str   → 200 + text/plain
+#      None  → 204 No Content
+#    For control over status code / headers, return Response objects from
+#    fastapi.responses.
+#
+# 3. Path params vs query params — don't mix!
+#    Path: /items/{item_id}  →  captured by path parameter
+#    Query: /items?name=abc&age=10  →  captured by function kwargs (keyword argument, eg: name=value)
+#    FastAPI reads them from the URL structure, not from arbitrary places.
+#
+# 4. Type hints are NOT optional — they DO something
+#    FastAPI uses type hints for: validation, serialization, and docs.
+#    `item_id: int` means "this must be an integer; otherwise return 422".
+#    Drop the hint and you drop validation + auto-docs for that parameter.
+#
+# 5. The app object is another Python object
+#    It's possible to mount sub-apps, add middleware, register events — it's all standard Python.
+#    `app = FastAPI(...)` is the entry point; everything else hangs off it.
+#
+# 6. Startup / shutdown events
+#    Use @app.on_event("startup") and @app.on_event("shutdown") for
+#    one-time setup (DB connections, cache warm-up) and teardown.
+#    Modern FastAPI prefers lifespan context managers.
+#
+# 7. Middleware runs on EVERY request
+#    Added via `app.add_middleware(...)`. Order matters — the first one
+#    added wraps the outermost layer. Common uses: CORS, auth, logging.
+#
+# Cross-Origin Resource Sharing(CORS): Cross-Origin Resource Sharing (CORS) is an HTTP-header based security
+# mechanism that allows a server to permit a web browser to load resources from a 
+# domain, scheme, or port different from the one that served the original page.
+#
+# 8. /docs and /redoc are FREE
+#    They exist because FastAPI generates an OpenAPI schema at runtime.
+#    Set docs_url=None / redoc_url=None to disable them in production.
+#
+# 9. Exceptions → automatic JSON error responses
+#    Raise HTTPException(status_code=404, detail="Not found") and FastAPI
+#    turns it into a 404 JSON response. Don't return error dicts manually.
+#
+# 10. reload=True is for development only
+#     Uvicorn's --reload watches files and restarts on change. Never use
+#     it in production — it adds overhead and can cause state loss.
+#
+# ============================================================================
+
