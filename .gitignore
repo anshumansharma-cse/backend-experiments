@@ -1,0 +1,6 @@
+# Ignored files & folders
+fast-study/
+course-files
+Drawing+Board.txt
+# OS files
+.DS_Store

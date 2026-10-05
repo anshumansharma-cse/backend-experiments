@@ -1,0 +1,140 @@
+from dns import query
+from fastapi import FastAPI
+from pure_eval.my_getattr_static import method_descriptor
+import uvicorn
+
+from fastapi import FastAPI
+import uvicorn
+
+from fastapi import Request # THE WHAT & WHY?
+# --- What: ---
+#  `Request` is a Pydantic model that represents an incoming HTTP request.
+# It gives you access to request metadata like headers, cookies, path params,
+# query params, body (bytes), and more — all via Python attributes.
+#
+# --- Why use it: ---
+# FastAPI auto-parses query params, path params, etc. by type hinting —
+# so `Request` is needed only when you want explicit control over something
+# that isn't covered by those shortcuts: reading raw headers, checking the
+# origin/CORS info, reading a non-JSON body directly as bytes, peeking at
+# the ASGI scope, etc.
+#
+# --- Common patterns: ---
+#   @app.get("/x")
+#   def x(req: Request):           # injected automatically by DI
+#       origin = req.headers.get("origin")
+#       return {"origin": origin}
+
+app = FastAPI(
+    title="FastAPI Experiments",
+    description=(
+        "Just playing with FastAPI"
+        "OpenAPI?"
+        "RESTAPI?"
+    ), # why the ','?
+    # Python joins adjacent string literals at compile time into ONE string before passing it to the function.
+    # Without that comma Python would raise a SyntaxError on the next line (`version="0.0.1"`).
+    version="0.0.1",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
+
+    # docs_url="...something...", WHAT
+    # Path where Swagger UI lives. Defaults to "/docs". Set to None to hide it.
+    # Example: docs_url="/swagger"  → browser goes to http://localhost:8000/swagger
+    #
+    # redoc_url="...something...", WHAT
+    # Path where ReDoc (alternative docs view) lives. Defaults to "/redoc". Set to None to hide it.
+    #
+    # openapi_url="/openapi.json"
+    # URL that serves the raw OpenAPI schema JSON. FastAPI generates it automatically at runtime.
+    # Defaults to "/openapi.json". Set to None to disable schema generation entirely
+    #  (useful when behind a reverse proxy that already exposes the schema separately).
+    #
+    # WHY does all this matter?
+    # Every FastAPI app ships with a built-in OpenAPI 3.0 spec at runtime.
+    # The "url" settings are just routes where users (and machines) can fetch
+    # that spec / interactive docs without the code touching them explicitly.
+)
+
+@app.get("/")
+def read_root():
+    """Root endpoint — Statement of Purpose"""
+    # --- Root endpoint means: ---
+    # The route mounted at path "/" — the very first thing a visitor sees when they hit the base address.
+    # In web architecture "/" is analogous to a home page or front door.
+    #
+    # In REST terms: it's the top-level resource of the API, often used to
+    # expose health / readiness / introduction data.
+    return {
+        "Puroose": "Learning",
+        "Day": "Sun",
+        "Status": "Good"
+    }
+
+@app.get("/about")
+# --- info to be displayed on 'http://127.0.0.1:8080/about' ---
+#  When a client sends a GET request to 'http://127.0.0.1:8080/about' ,
+# the routing table matches "/about", calls `about()`, and returns whatever
+# that function returns (dict → JSON response) inside the HTTP body with
+# status 200 and Content-Type: application/json.
+#
+# If the client navigates there in a browser you'll see a pretty-printed
+# JSON payload. If they call the OpenAPI docs endpoint instead, the tool
+# will render a full interactive spec for this route.
+def about():
+    """More Info"""
+    return {
+        "Location": "Ghaziabad",
+        "Time": "IST",
+        "version": "0.0.1"
+    }
+
+
+# Study This:
+# Using Request class
+@app.get("/bug/info")
+async def request_info(request: Request):
+    """Bug Info"""
+    return{
+        "method": request.method,
+        "url": str(request.url),
+        "headers": dict(request.headers),
+        "path_params": request.path_params,
+        "query_params": request.query_params
+    }
+#
+
+
+
+if __name__ == "__main__":
+    # --- Why didn't `__name__ == "__01_fast__"` check work? ---
+    # The dunder `__name__` is ALWAYS set to one of two values:
+    #   • "__main__"  — when the script is executed directly (python fast01.py)
+    #   • "<module>"  — when the script is imported (import fast01)
+    #
+    # Python does NOT let one invent their own name for the direct-execution case;
+    # there is no such thing as "__01_fast__". The string is literally
+    # the two characters __ name __ = "__main__".
+    # Writing == "__01_fast__" therefore NEVER matched, so uvicorn never started.
+    #
+    # --- Why did `uvicorn` from the terminal work but `python fast01.py` not? ---
+    # Terminal command:
+    #     uvicorn fast01:app --host 127.0.0.1 --port 8080 --reload
+    #
+    # uvicorn is a SERVER. It imports your module, finds the `app` object,
+    # and starts listening. It does this regardless of `__name__`. So even
+    # when `if __name__` block was broken, uvicorn ran the server fine
+    # because it never entered that guard — uvicorn starts directly.
+    #
+    # Running via python:
+    #     python fast01.py
+    #
+    # In this case uvicorn MUST be started from inside the script itself
+    # (inside the `if __name__` block). Since the guard was broken, the
+    # process exited immediately after defining `app` — no server started,
+    # so nothing was listening on port 8080.
+    #
+    # Fix: change `__01_fast__` to `__main__`. Then both invocation styles work.
+    uvicorn.run("fast01:app", host="127.0.0.1", port=8080, reload=True)
+
