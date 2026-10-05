@@ -1,6 +1,31 @@
-# Ignored files & folders
+# =========================
+# Private / local content
+# =========================
+
 fast-study/
-course-files
+course-files/
 Drawing+Board.txt
-# OS files
+
+# =========================
+# Secrets
+# =========================
+
+.env
+.env.*
+!.env.example
+
+# =========================
+# Python
+# =========================
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# =========================
+# OS
+# =========================
+
 .DS_Store
