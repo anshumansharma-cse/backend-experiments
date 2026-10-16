@@ -6,9 +6,6 @@
 # from pydoc import doc -> WHAT
 #  Query, HTTPException ?
 
-
-from importlib.util import source_from_cache
-
 from fastapi import FastAPI, Query, HTTPException
 import uvicorn
 from data_file import menu_items
