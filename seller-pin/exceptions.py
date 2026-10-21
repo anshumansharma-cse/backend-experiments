@@ -11,7 +11,7 @@ class PinNotFoundError(Exception):
         self.pincode = pincode
 
 class InvalidPinError(Exception):
-    def __init__(self, pincode = str, reason: str = "Invalid Format"):
+    def __init__(self, pincode: str, reason: str = "Invalid Format"):
         self.pincode = pincode
         self.reason = reason
 
@@ -33,7 +33,7 @@ async def invalid_pin_handler(request: Request, exc: InvalidPinError):
         status_code=400,
         content={
             "error": "invalid_pin",
-            "message": f"Pincode '{exc.pincode}' is invalid, vecause {exc.reason}",
+            "message": f"Pincode '{exc.pincode}' is invalid, because {exc.reason}",
             "pin": exc.pincode
         }
     )
